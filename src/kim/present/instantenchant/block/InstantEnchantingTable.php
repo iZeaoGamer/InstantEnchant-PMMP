@@ -26,8 +26,15 @@ declare(strict_types=1);
 
 namespace kim\present\instantenchant\block;
 
-use pocketmine\block\BlockFactory;
-use pocketmine\block\EnchantingTable;
+use kim\present\instantenchant\utils\{
+	Enchantability, EnchantmentConflict, EnchantmentLevel, EnchantmentType, EnchantmentWeight
+};
+use pocketmine\block\{
+	BlockFactory, EnchantingTable
+};
+use pocketmine\item\enchantment\{
+	Enchantment, EnchantmentInstance
+};
 use pocketmine\item\Item;
 use pocketmine\Player;
 
@@ -47,7 +54,12 @@ class InstantEnchantingTable extends EnchantingTable{
 	 * @return bool
 	 */
 	public function onActivate(Item $item, Player $player = null) : bool{
-		if($player instanceof Player){
+		if($player instanceof Player && !$item->hasEnchantments()){
+			$availableEnchantments = EnchantmentType::get($item);
+			if(empty($availableEnchantments)){
+				return true;
+			}
+
 			$newItem = clone $item;
 			$newItem->count = 1;
 			--$item->count;
@@ -97,9 +109,24 @@ class InstantEnchantingTable extends EnchantingTable{
 				}
 			}
 
-			//TODO: Implements enchanting
+			$probability = 1;
+			while(!empty($availableEnchantments) && mt_rand() / mt_getrandmax() <= $probability){
+				$weightTable = EnchantmentWeight::toWeightTable($availableEnchantments);
 
-			$inventory->addItem($newItem);
+				$enchantment = Enchantment::getEnchantment($weightTable[array_rand($weightTable)]);
+				$enchantability = Enchantability::getRandomized($newItem);
+				$enchantLevel = EnchantmentLevel::get($enchantment->getId(), $enchantability);
+				if($enchantment !== null && $enchantLevel > 0){
+					$newItem->addEnchantment(new EnchantmentInstance($enchantment, $enchantLevel));
+					$availableEnchantments = array_diff($availableEnchantments, EnchantmentConflict::get($enchantment->getId()));
+
+					$modifiedEnchantmentLevel = (30 + rand(0, (int) ($enchantability / 4)) + rand(0, (int) ($enchantability / 4)) + 1);
+					$probability = $modifiedEnchantmentLevel / 50;
+				}
+			}
+			if($newItem->hasEnchantments()){
+				$inventory->addItem($newItem);
+			}
 		}
 		return true;
 	}
