@@ -33,8 +33,9 @@ abstract class ItemType{
 	public const SWORD = 0;
 	public const TOOL = 1;
 	public const ARMOR = 2;
-	//public const FISHING_ROD = 3;
-	//public const TRIDENT = 4;
+	public const BOW = 3;
+	//public const FISHING_ROD = 4;
+	//public const TRIDENT = 5;
 
 	/**
 	 * @var int[] const of self
@@ -90,7 +91,10 @@ abstract class ItemType{
 		Item::IRON_BOOTS => self::ARMOR,
 		Item::CHAIN_BOOTS => self::ARMOR,
 		Item::GOLD_BOOTS => self::ARMOR,
-		Item::DIAMOND_BOOTS => self::ARMOR
+		Item::DIAMOND_BOOTS => self::ARMOR,
+
+		//BOW
+		Item::BOW => self::BOW
 	];
 
 	/**
